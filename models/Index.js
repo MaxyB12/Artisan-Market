@@ -1,10 +1,7 @@
-const Artisan = require('./Artisan');
-const Product = require('./Product');
+import Artisan from './Artisan.js';
+import Product from './Product.js';
 
-Artisan.hasMany(Product);
-Product.belongsTo(Artisan);
+Artisan.hasMany(Product, { foreignKey: 'artisanId' });
+Product.belongsTo(Artisan, { foreignKey: 'artisanId' });
 
-module.exports = {
-  Artisan,
-  Product
-};
+export { Artisan, Product };

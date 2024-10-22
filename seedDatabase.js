@@ -1,8 +1,8 @@
-const { Artisan, Product } = require('./models');
-const sequelize = require('./config/database');
+import { Artisan, Product } from './models/index.js';
+import sequelize from './config/database.js';
 
 const seedDatabase = async () => {
-  await sequelize.sync({ force: true }); // This will drop existing tables and recreate them
+  await sequelize.sync({ force: true });
 
   const artisans = await Artisan.bulkCreate([
     { name: 'Emma Woodworks', bio: 'Crafting beautiful wooden furniture for over 15 years.' },

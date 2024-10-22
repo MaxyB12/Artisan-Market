@@ -1,5 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
 
 const Product = sequelize.define('Product', {
   name: {
@@ -13,10 +13,14 @@ const Product = sequelize.define('Product', {
     type: DataTypes.FLOAT,
     allowNull: false
   },
-  artisanId: {
+  likes: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  artisanId: {  // Add this field
     type: DataTypes.INTEGER,
     allowNull: false
   }
 });
 
-module.exports = Product;
+export default Product;

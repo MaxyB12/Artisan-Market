@@ -1,10 +1,11 @@
-const express = require('express');
-const { graphqlHTTP } = require('express-graphql');
-const cors = require('cors');
-require('dotenv').config();
+import express from 'express';
+import { graphqlHTTP } from 'express-graphql';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import schema from './schema/schema.js';
+import sequelize from './config/database.js';
 
-const schema = require('./schema/schema');
-const sequelize = require('./config/database');
+dotenv.config();
 
 const app = express();
 
@@ -17,11 +18,22 @@ app.use('/graphql', graphqlHTTP({
 
 const PORT = process.env.PORT || 5001;
 
-sequelize.sync({ force: false }) // Set to true to drop and recreate tables on every server start
+sequelize.authenticate()
+  .then(() => {
+    console.log('Database connection has been established successfully.');
+    return sequelize.sync({ force: false });
+  })
   .then(() => {
     console.log('Database synchronized');
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
   })
-  .catch(err => console.error('Unable to connect to the database:', err));
+  .catch(err => {
+    console.error('Unable to connect to the database or synchronize:');
+    console.error(err.message);
+    if (err.parent) {
+      console.error('Detailed error:', err.parent.message);
+    }
+    process.exit(1);
+  });

@@ -1,14 +1,5 @@
-const graphql = require('graphql');
-const { Product, Artisan } = require('../models');
-
-const {
-  GraphQLObjectType,
-  GraphQLString,
-  GraphQLID,
-  GraphQLFloat,
-  GraphQLList,
-  GraphQLSchema
-} = graphql;
+import { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLID, GraphQLList, GraphQLNonNull, GraphQLFloat, GraphQLInt } from 'graphql';
+import { Product, Artisan } from '../models/index.js';
 
 const ProductType = new GraphQLObjectType({
   name: 'Product',
@@ -17,6 +8,7 @@ const ProductType = new GraphQLObjectType({
     name: { type: GraphQLString },
     description: { type: GraphQLString },
     price: { type: GraphQLFloat },
+    likes: { type: GraphQLInt },
     artisan: {
       type: ArtisanType,
       resolve(parent, args) {
@@ -73,6 +65,51 @@ const RootQuery = new GraphQLObjectType({
   }
 });
 
-module.exports = new GraphQLSchema({
-  query: RootQuery
+const Mutation = new GraphQLObjectType({
+  name: 'Mutation',
+  fields: {
+    addArtisan: {
+      type: ArtisanType,
+      args: {
+        name: { type: new GraphQLNonNull(GraphQLString) },
+        bio: { type: GraphQLString }
+      },
+      resolve(parent, args) {
+        return Artisan.create(args);
+      }
+    },
+    addProduct: {
+      type: ProductType,
+      args: {
+        name: { type: new GraphQLNonNull(GraphQLString) },
+        description: { type: GraphQLString },
+        price: { type: new GraphQLNonNull(GraphQLFloat) },
+        artisanId: { type: new GraphQLNonNull(GraphQLID) }
+      },
+      resolve(parent, args) {
+        return Product.create({ ...args, likes: 0 });
+      }
+    },
+    likeProduct: {
+      type: ProductType,
+      args: {
+        id: { type: new GraphQLNonNull(GraphQLID) }
+      },
+      async resolve(parent, args) {
+        const product = await Product.findByPk(args.id);
+        if (!product) {
+          throw new Error('Product not found');
+        }
+        product.likes = (product.likes || 0) + 1;
+        return product.save();
+      }
+    }
+  }
 });
+
+const schema = new GraphQLSchema({
+  query: RootQuery,
+  mutation: Mutation
+});
+
+export default schema;
