@@ -1,7 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Link } from 'react-router-dom';
-import { FaLeaf, FaPaintBrush, FaHeart } from 'react-icons/fa';
+import { Link } from 'react-router-dom'; // Make sure this is here
+import { FaLeaf, FaPaintBrush, FaHeart, FaUser } from 'react-icons/fa';
+
 
 const HomeWrapper = styled.div`
   display: flex;
@@ -56,6 +57,22 @@ const ExploreButton = styled(Link)`
   }
 `;
 
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+`;
+
+const AuthButton = styled(ExploreButton)`
+  background-color: #2c1810;
+  color: #f7f1e5;
+
+  &:hover {
+    background-color: #d4a373;
+    color: #2c1810;
+  }
+`;
+
 const FeatureSection = styled.div`
   display: flex;
   justify-content: space-around;
@@ -76,16 +93,31 @@ const FeatureIcon = styled.div`
 `;
 
 function HomePage() {
+  const isLoggedIn = !!localStorage.getItem('token');
+
   return (
     <HomeWrapper>
-      <WelcomeMessage>Welcome to the Artisan Market</WelcomeMessage>
+      <WelcomeMessage>
+        {isLoggedIn ? 'Welcome Back to Artisan Market' : 'Welcome to the Artisan Market'}
+      </WelcomeMessage>
       <Decoration>
         <FaLeaf />
         <FaPaintBrush />
         <FaHeart />
       </Decoration>
       <p>Discover unique handcrafted goods from talented artisans around the world.</p>
-      <ExploreButton to="/artisans">Explore Artisans</ExploreButton>
+      
+      <ButtonGroup>
+        <ExploreButton to={isLoggedIn ? "/artisans" : "/login"}>
+          Explore Artisans
+        </ExploreButton>
+        {!isLoggedIn && (
+          <AuthButton to="/register">
+            <FaUser /> Create Account
+          </AuthButton>
+        )}
+      </ButtonGroup>
+
       <FeatureSection>
         <Feature>
           <FeatureIcon><FaLeaf /></FeatureIcon>

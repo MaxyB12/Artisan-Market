@@ -1,7 +1,7 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { FaPalette, FaHome, FaUserAlt } from 'react-icons/fa';
+import { FaHome, FaPalette, FaSignOutAlt } from 'react-icons/fa';
 
 const HeaderWrapper = styled.header`
   background-color: #d4a373;
@@ -65,13 +65,44 @@ const NavLink = styled(Link)`
   }
 `;
 
+// New styled component for auth buttons
+const AuthButton = styled(NavLink)`
+  background-color: #2c1810;
+  color: #f7f1e5;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+
+  &:hover {
+    background-color: #3d2415;
+    color: #fff;
+  }
+`;
+
 function Header() {
+  const navigate = useNavigate();
+  const isLoggedIn = !!localStorage.getItem('token');
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+    window.location.reload();
+  };
+
   return (
     <HeaderWrapper>
       <Title>Artisan Market</Title>
       <Nav>
         <NavLink to="/"><FaHome /> Home</NavLink>
-        <NavLink to="/artisans"><FaPalette /> Artisans</NavLink>
+        {isLoggedIn ? (
+          <>
+            <NavLink to="/artisans"><FaPalette /> Artisans</NavLink>
+            <AuthButton as="button" onClick={handleLogout}>
+              <FaSignOutAlt /> Logout
+            </AuthButton>
+          </>
+        ) : (
+          <NavLink to="/login">Login</NavLink>
+        )}
       </Nav>
     </HeaderWrapper>
   );

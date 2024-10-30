@@ -1,12 +1,17 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { ApolloProvider } from '@apollo/client';
+import client from './apolloClient';
 import styled, { createGlobalStyle } from 'styled-components';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import ArtisanList from './components/ArtisanList';
+import Login from "./pages/Login";
+import ProtectedRoute from './components/ProtectedRoute'; // Add this import
 import '@fontsource/cormorant-garamond';
 import '@fontsource/amatic-sc';
+import Register from './pages/Register';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -45,21 +50,32 @@ const ContentContainer = styled.div`
 
 function App() {
   return (
-    <Router>
-      <GlobalStyle />
-      <AppWrapper>
-        <Header />
-        <MainContent>
-          <ContentContainer>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/artisans" element={<ArtisanList />} />
-            </Routes>
-          </ContentContainer>
-        </MainContent>
-        <Footer />
-      </AppWrapper>
-    </Router>
+    <ApolloProvider client={client}>
+      <Router>
+        <GlobalStyle />
+        <AppWrapper>
+          <Header />
+          <MainContent>
+            <ContentContainer>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/login" element={<Login />} />
+                <Route 
+                  path="/artisans" 
+                  element={
+                    <ProtectedRoute>
+                      <ArtisanList />
+                    </ProtectedRoute>
+                  } 
+                />
+              </Routes>
+            </ContentContainer>
+          </MainContent>
+          <Footer />
+        </AppWrapper>
+      </Router>
+    </ApolloProvider>
   );
 }
 
