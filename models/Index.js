@@ -1,6 +1,6 @@
 import Artisan from './Artisan.js';
 import Product from './Product.js';
-import User from './User.js';
+import User from './user.js';
 
 // Artisan-Product relationships
 Artisan.hasMany(Product, { foreignKey: 'artisanId' });
