@@ -64,12 +64,12 @@ const ButtonGroup = styled.div`
 `;
 
 const AuthButton = styled(ExploreButton)`
-  background-color: #2c1810;
-  color: #f7f1e5;
+  background-color: #d4a373;  // Same as ExploreButton
+  color: #2c1810;            // Same as ExploreButton
 
   &:hover {
-    background-color: #d4a373;
-    color: #2c1810;
+    background-color: #2c1810;
+    color: #f7f1e5;
   }
 `;
 

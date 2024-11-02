@@ -7,7 +7,14 @@ import { FaUser, FaLock } from 'react-icons/fa';
 
 const LOGIN_MUTATION = gql`
   mutation Login($username: String!, $password: String!) {
-    login(username: $username, password: $password)
+    login(username: $username, password: $password) {
+      token
+      user {
+        id
+        username
+        email
+      }
+    }
   }
 `;
 
@@ -138,16 +145,22 @@ function Login() {
 
   const [login, { error }] = useMutation(LOGIN_MUTATION, {
     onCompleted: (data) => {
-      localStorage.setItem('token', data.login);
-      navigate('/artisans');
-      window.location.reload();
+      if (data.login.token) {
+        localStorage.setItem('token', data.login.token);
+        window.location.href = '/artisans';
+      }
     },
+    onError: (error) => {
+      console.error('Login error:', error);
+    }
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await login({ variables: { username, password } });
+      await login({
+        variables: { username, password }
+      });
     } catch (err) {
       console.error('Login error:', err);
     }

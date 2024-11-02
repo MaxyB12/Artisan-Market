@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { ApolloProvider } from '@apollo/client';
 import client from './apolloClient';
 import styled, { createGlobalStyle } from 'styled-components';
@@ -8,10 +8,11 @@ import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import ArtisanList from './components/ArtisanList';
 import Login from "./pages/Login";
-import ProtectedRoute from './components/ProtectedRoute'; // Add this import
+import Register from './pages/Register';
+import ProtectedRoute from './components/ProtectedRoute';
 import '@fontsource/cormorant-garamond';
 import '@fontsource/amatic-sc';
-import Register from './pages/Register';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -49,27 +50,71 @@ const ContentContainer = styled.div`
 `;
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      setIsAuthenticated(!!token);
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, []);
+
+  if (isLoading) {
+    return <div>Loading...</div>; // You can replace this with a proper loading component
+  }
+
   return (
     <ApolloProvider client={client}>
       <Router>
         <GlobalStyle />
         <AppWrapper>
-          <Header />
+          <Header 
+            isAuthenticated={isAuthenticated} 
+            setIsAuthenticated={setIsAuthenticated} 
+          />
           <MainContent>
             <ContentContainer>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/login" element={<Login />} />
-                <Route 
-                  path="/artisans" 
-                  element={
-                    <ProtectedRoute>
-                      <ArtisanList />
-                    </ProtectedRoute>
-                  } 
-                />
-              </Routes>
+              <ErrorBoundary>
+                <Routes>
+                  <Route 
+                    path="/" 
+                    element={<HomePage />} 
+                  />
+                  <Route 
+                    path="/register" 
+                    element={
+                      isAuthenticated ? 
+                        <Navigate to="/artisans" replace /> : 
+                        <Register setIsAuthenticated={setIsAuthenticated} />
+                    } 
+                  />
+                  <Route 
+                    path="/login" 
+                    element={
+                      isAuthenticated ? 
+                        <Navigate to="/artisans" replace /> : 
+                        <Login setIsAuthenticated={setIsAuthenticated} />
+                    } 
+                  />
+                  <Route 
+                    path="/artisans" 
+                    element={
+                      <ProtectedRoute isAuthenticated={isAuthenticated}>
+                        <ArtisanList />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  {/* Catch all route for 404 */}
+                  <Route 
+                    path="*" 
+                    element={<Navigate to="/" replace />} 
+                  />
+                </Routes>
+              </ErrorBoundary>
             </ContentContainer>
           </MainContent>
           <Footer />

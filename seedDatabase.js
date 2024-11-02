@@ -2,15 +2,17 @@ import { Artisan, Product } from './models/index.js';
 import sequelize from './config/database.js';
 
 const seedDatabase = async () => {
-  await sequelize.sync({ force: true });
+  try {
+    await sequelize.sync({ force: true });
 
-  const artisans = await Artisan.bulkCreate([
-    { name: 'Emma Woodworks', bio: 'Crafting beautiful wooden furniture for over 15 years.' },
-    { name: 'Sophia\'s Ceramics', bio: 'Creating unique, hand-thrown pottery inspired by nature.' },
-    { name: 'Liam\'s Leather Goods', bio: 'Specializing in high-quality, handmade leather accessories.' },
-    { name: 'Olivia\'s Textiles', bio: 'Weaving traditional patterns with modern designs in textiles.' },
-    { name: 'Noah\'s Metalworks', bio: 'Forging functional art from various metals for home and garden.' }
-  ]);
+    const artisans = await Artisan.bulkCreate([
+      { name: 'Emma Woodworks', bio: 'Crafting beautiful wooden furniture for over 15 years.' },
+      { name: 'Sophia\'s Ceramics', bio: 'Creating unique, hand-thrown pottery inspired by nature.' },
+      { name: 'Liam\'s Leather Goods', bio: 'Specializing in high-quality, handmade leather accessories.' },
+      { name: 'Olivia\'s Textiles', bio: 'Weaving traditional patterns with modern designs in textiles.' },
+      { name: 'Noah\'s Metalworks', bio: 'Forging functional art from various metals for home and garden.' },
+      { name: 'Isabella\'s Glass Art', bio: 'Creating stunning glass pieces using traditional and modern techniques.' } // New artisan
+    ]);
 
   const products = [
     { name: 'Handcrafted Oak Dining Table', description: 'A sturdy, elegant dining table made from solid oak.', price: 1200, artisanId: 1 },
@@ -27,17 +29,29 @@ const seedDatabase = async () => {
     { name: 'Silk Scarf with Hand-painted Design', description: 'A luxurious silk scarf featuring a unique, hand-painted design.', price: 75, artisanId: 4 },
     { name: 'Wrought Iron Garden Gate', description: 'A decorative and functional wrought iron garden gate.', price: 500, artisanId: 5 },
     { name: 'Copper Wind Chimes', description: 'Melodic copper wind chimes with a patina finish.', price: 65, artisanId: 5 },
-    { name: 'Stainless Steel Sculpture', description: 'An abstract stainless steel sculpture for modern home decor.', price: 300, artisanId: 5 }
-  ];
+    { name: 'Stainless Steel Sculpture', description: 'An abstract stainless steel sculpture for modern home decor.', price: 300, artisanId: 5 },
+    { name: 'Stained Glass Window Panel', description: 'Custom-made stained glass panel featuring a peacock design.', price: 450, artisanId: 6 },
+    { name: 'Hand-Blown Glass Vase', description: 'Elegant hand-blown glass vase with swirling colors of blue and purple.', price: 275, artisanId: 6 },
+    { name: 'Glass Suncatcher Set', description: 'Set of three crystal suncatchers with rainbow prism effects.', price: 95, artisanId: 6 }
+];
 
   await Product.bulkCreate(products);
 
   console.log('Database seeded successfully!');
+} catch (error) {
+  console.error('Error seeding database:', error);
+  throw error;
+} finally {
+  await sequelize.close();
+}
 };
 
 seedDatabase()
-  .then(() => process.exit(0))
+  .then(() => {
+    console.log('Seeding completed successfully');
+    process.exit(0);
+  })
   .catch(err => {
-    console.error('Error seeding database:', err);
+    console.error('Error during seeding:', err);
     process.exit(1);
   });

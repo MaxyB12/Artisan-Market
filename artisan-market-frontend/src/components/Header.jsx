@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { FaHome, FaPalette, FaSignOutAlt } from 'react-icons/fa';
+import { FaHome, FaSignInAlt, FaUserPlus, FaPalette, FaSignOutAlt, FaPencilAlt, FaClipboard } from 'react-icons/fa';
 
 const HeaderWrapper = styled.header`
   background-color: #d4a373;
@@ -10,35 +10,51 @@ const HeaderWrapper = styled.header`
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
-
-  &::before, &::after {
-    content: '';
-    position: absolute;
-    width: 200px;
-    height: 200px;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23f7f1e5" /></svg>');
-    background-size: 20px 20px;
-    opacity: 0.1;
-  }
-
-  &::before {
-    top: -100px;
-    left: -100px;
-    transform: rotate(30deg);
-  }
-
-  &::after {
-    bottom: -100px;
-    right: -100px;
-    transform: rotate(-30deg);
-  }
 `;
 
-const Title = styled.h1`
-  color: #2c1810;
+const AnimatedTitle = styled.h1`
+  color: transparent;
   font-size: 3.5rem;
   margin: 0;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+  font-family: 'Amatic SC', cursive;
+  position: relative;
+  display: inline-block;
+  -webkit-text-stroke: 1px #2c1810;
+  
+  &::before {
+    content: 'Artisan Market';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    color: white;
+    background: linear-gradient(
+      90deg,
+      white 0%,
+      rgba(255,255,255,0.9) 45%,
+      rgba(255,255,255,0.8) 65%,
+      transparent 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    background-size: 200% 100%;
+    animation: paint 5s ease-in-out infinite;
+    filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+  }
+
+  @keyframes paint {
+    0% {
+      background-position: -200% 0;
+    }
+    50% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
 `;
 
 const Nav = styled.nav`
@@ -51,7 +67,9 @@ const Nav = styled.nav`
 const NavLink = styled(Link)`
   color: #2c1810;
   text-decoration: none;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
+  font-family: 'Amatic SC', cursive;
+  letter-spacing: 1px;
   transition: all 0.3s;
   display: flex;
   align-items: center;
@@ -60,48 +78,68 @@ const NavLink = styled(Link)`
   border-radius: 5px;
 
   &:hover {
-    background-color: rgba(255,255,255,0.2);
+    background-color: rgba(44, 24, 16, 0.1);
     transform: translateY(-2px);
   }
-`;
 
-// New styled component for auth buttons
-const AuthButton = styled(NavLink)`
-  background-color: #2c1810;
-  color: #f7f1e5;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-
-  &:hover {
-    background-color: #3d2415;
-    color: #fff;
+  svg {
+    font-size: 1.2rem;
   }
 `;
 
-function Header() {
+const LogoutButton = styled.button`
+  color: #2c1810;
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Amatic SC', cursive;
+  letter-spacing: 1px;
+
+  &:hover {
+    background-color: rgba(44, 24, 16, 0.1);
+    transform: translateY(-2px);
+  }
+
+  svg {
+    font-size: 1.2rem;
+  }
+`;
+
+function Header({ isAuthenticated, setIsAuthenticated }) {
   const navigate = useNavigate();
-  const isLoggedIn = !!localStorage.getItem('token');
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    navigate('/');
-    window.location.reload();
+    if (setIsAuthenticated) {
+      setIsAuthenticated(false);
+    }
+    navigate('/login');
   };
 
   return (
     <HeaderWrapper>
-      <Title>Artisan Market</Title>
+      <AnimatedTitle>Artisan Market</AnimatedTitle>
       <Nav>
         <NavLink to="/"><FaHome /> Home</NavLink>
-        {isLoggedIn ? (
+        {isAuthenticated ? (
           <>
             <NavLink to="/artisans"><FaPalette /> Artisans</NavLink>
-            <AuthButton as="button" onClick={handleLogout}>
+            <LogoutButton onClick={handleLogout}>
               <FaSignOutAlt /> Logout
-            </AuthButton>
+            </LogoutButton>
           </>
         ) : (
-          <NavLink to="/login">Login</NavLink>
+          <>
+            <NavLink to="/login"><FaPencilAlt /> Login</NavLink>
+            <NavLink to="/register"><FaClipboard /> Register</NavLink>
+          </>
         )}
       </Nav>
     </HeaderWrapper>

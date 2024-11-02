@@ -1,24 +1,8 @@
 import React from 'react';
-import { useQuery, useMutation, gql } from '@apollo/client';
+import { useQuery, useMutation, gql } from '@apollo/client'; // Added useMutation
 import styled from 'styled-components';
 import { FaLeaf, FaHeart } from 'react-icons/fa';
-
-const GET_ARTISANS = gql`
-  query GetArtisans {
-    artisans {
-      id
-      name
-      bio
-      products {
-        id
-        name
-        description
-        price
-        likes
-      }
-    }
-  }
-`;
+import { useNavigate } from 'react-router-dom';
 
 const LIKE_PRODUCT = gql`
   mutation LikeProduct($id: ID!) {
@@ -29,192 +13,79 @@ const LIKE_PRODUCT = gql`
   }
 `;
 
-const ArtisanGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  padding: 1rem;
-`;
-
-const ArtisanCard = styled.div`
-  background-color: #fff;
-  border-radius: 10px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
-
-  &:hover {
-    transform: translateY(-5px);
-  }
-`;
-
-const ArtisanName = styled.h2`
-  color: #2c1810;
-  margin-bottom: 1rem;
-  font-size: 2rem;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    width: 50px;
-    height: 3px;
-    background-color: #d4a373;
-  }
-`;
-
-const ArtisanBio = styled.p`
-  color: #2c1810;
-  margin-bottom: 1.5rem;
-  font-style: italic;
-`;
-
-const ProductsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-`;
-
-const ProductCard = styled.div`
-  background-color: #f7f1e5;
-  border-radius: 8px;
-  padding: 1rem;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const ProductName = styled.h3`
-  color: #2c1810;
-  margin-bottom: 0.5rem;
-  font-size: 1.5rem;
-`;
-
-const ProductDescription = styled.p`
-  color: #2c1810;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-`;
-
-const ProductPrice = styled.span`
-  color: #d4a373;
-  font-weight: bold;
-  font-size: 1.2rem;
-`;
-
-const LikeButton = styled.button`
-  background: none;
-  border: none;
-  color: #d4a373;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-
-  &:hover {
-    color: #e25555;
-    transform: scale(1.1);
-  }
-
-  svg {
-    font-size: 1.2rem;
-  }
-`;
-
-const ProductFooter = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1rem;
-`;
-
-const LoadingMessage = styled.div`
-  text-align: center;
-  padding: 2rem;
-  font-size: 1.5rem;
-  color: #2c1810;
-`;
-
-const ErrorMessage = styled.div`
-  text-align: center;
-  padding: 2rem;
-  color: #e25555;
-  font-size: 1.2rem;
-`;
-
-const EcoFriendlyBadge = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: #d4a373;
-  color: #fff;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
-
-  svg {
-    font-size: 1rem;
+const GET_ARTISANS = gql`
+  query GetArtisans {
+    artisans {
+      id
+      name
+      bio
+      Products {
+        id
+        name
+        description
+        price
+        likes
+      }
+    }
   }
 `;
 
 function ArtisanList() {
-  const isLoggedIn = !!localStorage.getItem('token');
-  const { loading, error, data } = useQuery(GET_ARTISANS);
-  const [likeProduct] = useMutation(LIKE_PRODUCT);
-
-  if (loading) return <LoadingMessage>Loading our talented artisans...</LoadingMessage>;
-  if (error) return <ErrorMessage>Error: {error.message}</ErrorMessage>;
-
-  const handleLike = async (productId) => {
-    if (!isLoggedIn) {
-      alert('Please log in to like products');
-      return;
+  const navigate = useNavigate();
+  const { loading, error, data } = useQuery(GET_ARTISANS, {
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      console.log('Query completed. Data received:', data);
+    },
+    onError: (error) => {
+      console.error('Query error:', error);
     }
+  });
 
+  // Add like mutation hook
+  const [likeProduct] = useMutation(LIKE_PRODUCT, {
+    update(cache, { data: { likeProduct } }) {
+      const { artisans } = cache.readQuery({ query: GET_ARTISANS });
+      cache.writeQuery({
+        query: GET_ARTISANS,
+        data: {
+          artisans: artisans.map(artisan => ({
+            ...artisan,
+            Products: artisan.Products.map(product =>
+              product.id === likeProduct.id
+                ? { ...product, likes: likeProduct.likes }
+                : product
+            )
+          }))
+        }
+      });
+    }
+  });
+
+  // Add handle like function
+  const handleLike = async (productId) => {
     try {
       await likeProduct({
-        variables: { id: productId },
-        context: {
-          headers: {
-            authorization: localStorage.getItem('token')
-          }
-        },
-        optimisticResponse: {
-          likeProduct: {
-            __typename: 'Product',
-            id: productId,
-            likes: data.artisans
-              .flatMap(artisan => artisan.products)
-              .find(product => product.id === productId).likes + 1,
-          },
-        },
-        update: (cache, { data: { likeProduct } }) => {
-          const existingArtisans = cache.readQuery({ query: GET_ARTISANS });
-          const updatedArtisans = existingArtisans.artisans.map(artisan => ({
-            ...artisan,
-            products: artisan.products.map(product =>
-              product.id === likeProduct.id ? { ...product, likes: likeProduct.likes } : product
-            ),
-          }));
-          cache.writeQuery({
-            query: GET_ARTISANS,
-            data: { artisans: updatedArtisans },
-          });
-        },
+        variables: { id: productId }
       });
     } catch (error) {
       console.error('Error liking product:', error);
     }
   };
+
+  console.log('Current state:', { loading, error, data });
+
+  if (loading) {
+    return <LoadingContainer>Loading artisans...</LoadingContainer>;
+  }
+
+  if (error) {
+    return <ErrorContainer>Error: {error.message}</ErrorContainer>;
+  }
+
+  if (!data || !data.artisans || data.artisans.length === 0) {
+    return <EmptyContainer>No artisans found</EmptyContainer>;
+  }
 
   return (
     <ArtisanGrid>
@@ -226,14 +97,14 @@ function ArtisanList() {
           </EcoFriendlyBadge>
           <ArtisanBio>{artisan.bio}</ArtisanBio>
           <ProductsGrid>
-            {artisan.products.map(product => (
+            {artisan.Products && artisan.Products.map(product => (
               <ProductCard key={product.id}>
                 <ProductName>{product.name}</ProductName>
                 <ProductDescription>{product.description}</ProductDescription>
                 <ProductFooter>
                   <ProductPrice>${product.price}</ProductPrice>
                   <LikeButton onClick={() => handleLike(product.id)}>
-                    <FaHeart /> {product.likes}
+                    <FaHeart /> {product.likes || 0}
                   </LikeButton>
                 </ProductFooter>
               </ProductCard>
@@ -244,5 +115,140 @@ function ArtisanList() {
     </ArtisanGrid>
   );
 }
+
+const LoadingContainer = styled.div`
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.5rem;
+  color: #2c1810;
+`;
+
+const ErrorContainer = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: #ff0000;
+  font-size: 1.2rem;
+`;
+
+const EmptyContainer = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: #2c1810;
+  font-size: 1.2rem;
+`;
+
+const ArtisanGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  padding: 2rem;
+  background-color: #f7f1e5;
+`;
+
+const ArtisanCard = styled.div`
+  background: white;
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+`;
+
+const ArtisanName = styled.h2`
+  color: #2c1810;
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  font-family: 'Amatic SC', cursive;
+`;
+
+const EcoFriendlyBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #d4a373;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+
+  svg {
+    color: #98c1d9;
+  }
+`;
+
+const ArtisanBio = styled.p`
+  color: #5c5c5c;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+`;
+
+const ProductsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+`;
+
+const ProductCard = styled.div`
+  background: #fefae0;
+  padding: 1.5rem;
+  border-radius: 10px;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+  }
+`;
+
+const ProductName = styled.h3`
+  color: #2c1810;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  font-family: 'Amatic SC', cursive;
+`;
+
+const ProductDescription = styled.p`
+  color: #5c5c5c;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+`;
+
+const ProductFooter = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const ProductPrice = styled.span`
+  color: #2c1810;
+  font-weight: bold;
+  font-size: 1.1rem;
+`;
+
+const LikeButton = styled.button`
+  background: none;
+  border: none;
+  color: #d4a373;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  padding: 0.5rem;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.1);
+    color: #e76f51;
+  }
+
+  svg {
+    font-size: 1.2rem;
+  }
+`;
 
 export default ArtisanList;
